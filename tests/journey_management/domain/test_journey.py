@@ -26,3 +26,13 @@ def test_create_journey_with_start_after_end_is_rejected():
             end_date=date(2026, 12, 1),
             today=TODAY,
         )
+
+
+def test_create_journey_with_start_in_the_past_is_rejected():
+    with pytest.raises(InvalidJourneyTimeframe):
+        Journey.create(
+            title="Lissabon",
+            start_date=date(2026, 11, 1),  # before TODAY (2026-11-18)
+            end_date=date(2026, 12, 8),
+            today=TODAY,
+        )
