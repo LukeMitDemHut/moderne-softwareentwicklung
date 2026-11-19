@@ -16,12 +16,23 @@ class Journey:
 
     @classmethod
     def create(cls, title: str, start_date: date, end_date: date, today: date) -> "Journey":
-        if start_date <= today:
-            raise InvalidJourneyTimeframe("Start date must be in the future")
-        if start_date >= end_date:
-            raise InvalidJourneyTimeframe("Start date must be before end date")
-        if not title.strip():
-            raise InvalidJourneyTitle("Title must not be empty")
+        rules = [
+            (
+                lambda: start_date <= today,
+                InvalidJourneyTimeframe("Start date must be in the future"),
+            ),
+            (
+                lambda: start_date >= end_date,
+                InvalidJourneyTimeframe("Start date must be before end date"),
+            ),
+            (
+                lambda: not title.strip(),
+                InvalidJourneyTitle("Title must not be empty"),
+            ),
+        ]
+        violation = next((error for is_violated, error in rules if is_violated()), None)
+        if violation is not None:
+            raise violation
         journey = cls(id=uuid4(), title=title, start_date=start_date, end_date=end_date)
         journey.events.append(
             JourneyCreated(
