@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe
+from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe, InvalidJourneyTitle
 from sqr.journey_management.domain.journey.journey import Journey
 
 TODAY = date(2026, 11, 18)  # fixed date, so the test result never depends on the real day
@@ -81,3 +81,12 @@ def test_create_journey_uses_the_given_today_value():
     # with today = 5 Dec the same start lies in the past: rejected
     with pytest.raises(InvalidJourneyTimeframe):
         Journey.create(title="Lissabon", start_date=start, end_date=end, today=late_today)
+
+
+@pytest.mark.parametrize("title", ["", "   "])  # runs the test once per value
+def test_create_journey_with_blank_title_is_rejected(title):
+    start = date(2026, 12, 1)
+    end = date(2026, 12, 8)
+
+    with pytest.raises(InvalidJourneyTitle):
+        Journey.create(title=title, start_date=start, end_date=end, today=TODAY)
