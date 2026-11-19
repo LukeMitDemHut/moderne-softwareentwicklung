@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID, uuid4
 
-from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe
+from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe, InvalidJourneyTitle
 
 
 @dataclass
@@ -18,4 +18,6 @@ class Journey:
             raise InvalidJourneyTimeframe("Start date must be in the future")
         if start_date >= end_date:
             raise InvalidJourneyTimeframe("Start date must be before end date")
+        if not title.strip():
+            raise InvalidJourneyTitle("Title must not be empty")
         return cls(id=uuid4(), title=title, start_date=start_date, end_date=end_date)

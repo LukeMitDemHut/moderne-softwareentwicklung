@@ -4,3 +4,7 @@ class DomainError(Exception):
 
 class InvalidJourneyTimeframe(DomainError):
     """Raised when the start and end date of a journey are not valid."""
+
+
+class InvalidJourneyTitle(DomainError):
+    """Title of the journey is invalid."""
