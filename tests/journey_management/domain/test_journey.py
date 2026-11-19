@@ -4,6 +4,7 @@ import pytest
 
 from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe, InvalidJourneyTitle
 from sqr.journey_management.domain.journey.journey import Journey
+from sqr.journey_management.domain.journey.events import JourneyCreated
 
 TODAY = date(2026, 11, 18)  # fixed date, so the test result never depends on the real day
 
@@ -99,3 +100,15 @@ def test_create_journey_with_single_character_title_is_accepted():
     journey = Journey.create(title="A", start_date=start, end_date=end, today=TODAY)  # lower bound: no minimum length
 
     assert journey.title == "A"
+
+
+
+def test_create_journey_records_journey_created_event():
+    start = date(2026, 12, 1)
+    end = date(2026, 12, 8)
+
+    journey = Journey.create(title="Lissabon", start_date=start, end_date=end, today=TODAY)
+
+    assert journey.events == [
+        JourneyCreated(journey_id=journey.id, title="Lissabon", start_date=start, end_date=end)
+    ]
