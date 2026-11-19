@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID, uuid4
 
 from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe, InvalidJourneyTitle
+from sqr.journey_management.domain.journey.events import JourneyCreated
 
 
 @dataclass
@@ -11,6 +12,7 @@ class Journey:
     title: str
     start_date: date
     end_date: date
+    events: list[JourneyCreated] = field(default_factory=list)
 
     @classmethod
     def create(cls, title: str, start_date: date, end_date: date, today: date) -> "Journey":
@@ -20,4 +22,13 @@ class Journey:
             raise InvalidJourneyTimeframe("Start date must be before end date")
         if not title.strip():
             raise InvalidJourneyTitle("Title must not be empty")
-        return cls(id=uuid4(), title=title, start_date=start_date, end_date=end_date)
+        journey = cls(id=uuid4(), title=title, start_date=start_date, end_date=end_date)
+        journey.events.append(
+            JourneyCreated(
+                journey_id=journey.id,
+                title=journey.title,
+                start_date=journey.start_date,
+                end_date=journey.end_date,
+            )
+        )
+        return journey
