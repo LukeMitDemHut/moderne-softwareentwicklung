@@ -67,3 +67,17 @@ def test_create_journey_with_end_one_day_after_start_is_accepted():
         today=TODAY,
     )
     assert journey.end_date == date(2026, 12, 2)
+
+
+def test_create_journey_uses_the_given_today_value():
+    start = date(2026, 12, 1)
+    end = date(2026, 12, 8)
+    early_today = date(2026, 11, 18)
+    late_today = date(2026, 12, 5)
+
+    # with today = 18 Nov the start lies in the future: accepted
+    Journey.create(title="Lissabon", start_date=start, end_date=end, today=early_today)
+
+    # with today = 5 Dec the same start lies in the past: rejected
+    with pytest.raises(InvalidJourneyTimeframe):
+        Journey.create(title="Lissabon", start_date=start, end_date=end, today=late_today)
