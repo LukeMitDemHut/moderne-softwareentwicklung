@@ -90,3 +90,12 @@ def test_create_journey_with_blank_title_is_rejected(title):
 
     with pytest.raises(InvalidJourneyTitle):
         Journey.create(title=title, start_date=start, end_date=end, today=TODAY)
+
+
+def test_create_journey_with_single_character_title_is_accepted():
+    start = date(2026, 12, 1)
+    end = date(2026, 12, 8)
+
+    journey = Journey.create(title="A", start_date=start, end_date=end, today=TODAY)  # lower bound: no minimum length
+
+    assert journey.title == "A"
