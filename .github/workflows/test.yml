@@ -1,0 +1,27 @@
+name: test
+
+on:
+  pull_request:
+    branches: ["main"]      # target filter: any PR *into* main
+    paths-ignore: ["docs/**", "frontend/**", "**.md"]
+  push:
+    branches: ["main"]
+    paths-ignore: ["docs/**", "frontend/**", "**.md"]
+  workflow_dispatch: {}
+
+# runs supersede each other per ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test
+        run: ./dev test
