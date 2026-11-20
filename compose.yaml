@@ -1,0 +1,11 @@
+services:
+  app:
+    container_name: sqr-app
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - "./backend:/app"
+    # TODO: once we have a server, run it here
+    # TODO: frontend
