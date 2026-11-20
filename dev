@@ -46,7 +46,7 @@ EOF
         ;;
     test)
         shift
-        docker compose run --rm app /opt/venv/bin/pytest "$@"
+        docker compose run --rm app /opt/venv/bin/pytest --cov --cov-report=term-missing --cov-report=xml "$@"
         ;;
     lint)
         shift

@@ -14,4 +14,14 @@ testpaths = ["tests"]
 ignore = ["EXE002"]
 
 [dependency-groups]
-dev = ["pytest>=9", "ruff>=0.9"]
+dev = ["pytest>=9", "pytest-cov>=6", "ruff>=0.9"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+precision = 1
+fail_under = 100
+

@@ -12,7 +12,7 @@ Strategy document for the Continuous Integration / Continuous Delivery pipeline 
 | # | Stage | Trigger | Content | Gate for |
 |---|-------|---------|---------|----------|
 | 1 | **Commit** | `push` to any branch (no tags, no docs-only changes) | Linting (ruff) | Nothing — early feedback only |
-| 2 | **Pull Request** | `pull_request` targeting `main` | Linting + full test suite (pytest, coverage) executed **inside the container** via docker compose, including E2E against multiple services | Merging into `main` |
+| 2 | **Pull Request** | `pull_request` targeting `main` (merge preview), `push` to `main` (post-merge), `workflow_dispatch` | Linting + full test suite (pytest, coverage) executed **inside the container** via docker compose, including E2E against multiple services | Merging into `main` |
 | 3 | **Release** | `push` of a version tag (`v*.*.*`, semver) | Re-run Stage 2 as gate → build Docker image → push image → create GitHub Release | Publishing the version |
 
 ### Trigger semantics
@@ -21,10 +21,20 @@ Strategy document for the Continuous Integration / Continuous Delivery pipeline 
 - Version tags matching `vMAJOR.MINOR.PATCH` (e.g. `v0.1.0`) are the only release trigger. Accidental tags should not publish anything.
 - `workflow_dispatch` will be enabled on all workflows so any stage can be triggered manually from the Actions tab.
 
+### Gate enforcement — branch protection on `main`
+
+- **Required status checks:** `test` and `lint` — contexts must match the workflow/job names exactly (`test.yml` → job `test`, `lint.yml` → job `lint`). Strict mode ("re-run when the branch is outdated") is deliberately off for now.
+- **Pull requests required before merging** with `1` approving review; stale approvals are dismissed when new commits arrive, so an approval always refers to the reviewed code.
+- **`enforce_admins` = true** ("do not allow bypassing"): nobody merges or pushes around the gate — direct pushes to `main` are impossible.
+- **Force pushes and branch deletions are rejected.**
+- **Registration constraint (why a bootstrap existed):** a check can only be marked *required* after GitHub has observed that workflow run once. Workflows without push triggers (e.g. `test.yml`) need the file on the default branch or one manual dispatch first. In the tooling PR both workflow files were therefore pushed to `main` directly *before* protection was activated — and the protection rule closed that channel immediately after.
+- **Gate manifest sync (mirrors the `./dev` contract in §4):** when workflow/job names change, or new gates appear (Stage 3's test job, coverage/JUnit reporting), the protection rule must be updated in the same change.
+- **Verification path:** `workflow_dispatch` of `test.yml` on a feature branch proves the pipeline stands up; it does *not* satisfy the merge gate — the gate always evaluates the pull request's merge preview.
+
 ## 3. Workflow Layout
 
 1. **`lint.yml`** — Stage 1. Checkout → `./dev lint` (compose builds the image on demand; findings are attached as PR annotations via `ruff --output-format=github`).
-2. **`test.yml`** — Stage 2. Checkout → build compose environment → run `./dev test` inside the app container → collect exit code, test summary and coverage report → tear down.
+2. **`test.yml`** — Stage 2. Checkout → build compose environment → run `./dev test` inside the app container → tear down. (Red/green exit status + `coverage.xml` artifact today; machine-readable test summary for check annotations arrives later, see §5.)
 3. **`release.yml`** — Stage 3. Runs the same test job as Stage 2 first; only on success: build the image, push to GHCR, create the GitHub Release.
 
 
