@@ -46,7 +46,15 @@ EOF
         ;;
     test)
         shift
-        ./dev 
+        docker compose run --rm app /opt/venv/bin/pytest "$@"
+        ;;
+    lint)
+        shift
+        docker compose run --rm app /opt/venv/bin/ruff check "$@"
+        ;;
+    format)
+        shift
+        docker compose run --rm app /opt/venv/bin/ruff format "$@"
         ;;
     check-env)
         echo "Checking environment variables..."

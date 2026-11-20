@@ -1,8 +1,12 @@
+#!/usr/bin/env python3
 from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID, uuid4
 
-from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe, InvalidJourneyTitle
+from sqr.journey_management.domain.exceptions import (
+    InvalidJourneyTimeframe,
+    InvalidJourneyTitle,
+)
 from sqr.journey_management.domain.journey.events import JourneyCreated
 
 
@@ -15,7 +19,9 @@ class Journey:
     events: list[JourneyCreated] = field(default_factory=list)
 
     @classmethod
-    def create(cls, title: str, start_date: date, end_date: date, today: date) -> "Journey":
+    def create(
+        cls, title: str, start_date: date, end_date: date, today: date
+    ) -> "Journey":
         if start_date <= today:
             raise InvalidJourneyTimeframe("Start date must be in the future")
         if start_date >= end_date:

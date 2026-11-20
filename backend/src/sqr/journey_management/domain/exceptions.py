@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 class DomainError(Exception):
     """Base class for all rule violations in the domain layer."""
 

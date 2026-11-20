@@ -1,12 +1,18 @@
+#!/usr/bin/env python3
 from datetime import date
 
 import pytest
 
-from sqr.journey_management.domain.exceptions import InvalidJourneyTimeframe, InvalidJourneyTitle
-from sqr.journey_management.domain.journey.journey import Journey
+from sqr.journey_management.domain.exceptions import (
+    InvalidJourneyTimeframe,
+    InvalidJourneyTitle,
+)
 from sqr.journey_management.domain.journey.events import JourneyCreated
+from sqr.journey_management.domain.journey.journey import Journey
 
-TODAY = date(2026, 11, 18)  # fixed date, so the test result never depends on the real day
+TODAY = date(
+    2026, 11, 18
+)  # fixed date, so the test result never depends on the real day
 
 
 def test_create_journey_with_valid_timeframe_succeeds():
@@ -57,7 +63,9 @@ def test_create_journey_with_start_equal_to_end_is_rejected():
     same_day = date(2026, 12, 1)  # same day: not "start before end"
 
     with pytest.raises(InvalidJourneyTimeframe):
-        Journey.create(title="Lissabon", start_date=same_day, end_date=same_day, today=TODAY)
+        Journey.create(
+            title="Lissabon", start_date=same_day, end_date=same_day, today=TODAY
+        )
 
 
 def test_create_journey_with_end_one_day_after_start_is_accepted():
@@ -81,7 +89,9 @@ def test_create_journey_uses_the_given_today_value():
 
     # with today = 5 Dec the same start lies in the past: rejected
     with pytest.raises(InvalidJourneyTimeframe):
-        Journey.create(title="Lissabon", start_date=start, end_date=end, today=late_today)
+        Journey.create(
+            title="Lissabon", start_date=start, end_date=end, today=late_today
+        )
 
 
 @pytest.mark.parametrize("title", ["", "   "])  # runs the test once per value
@@ -97,18 +107,23 @@ def test_create_journey_with_single_character_title_is_accepted():
     start = date(2026, 12, 1)
     end = date(2026, 12, 8)
 
-    journey = Journey.create(title="A", start_date=start, end_date=end, today=TODAY)  # lower bound: no minimum length
+    journey = Journey.create(
+        title="A", start_date=start, end_date=end, today=TODAY
+    )  # lower bound: no minimum length
 
     assert journey.title == "A"
-
 
 
 def test_create_journey_records_journey_created_event():
     start = date(2026, 12, 1)
     end = date(2026, 12, 8)
 
-    journey = Journey.create(title="Lissabon", start_date=start, end_date=end, today=TODAY)
+    journey = Journey.create(
+        title="Lissabon", start_date=start, end_date=end, today=TODAY
+    )
 
     assert journey.events == [
-        JourneyCreated(journey_id=journey.id, title="Lissabon", start_date=start, end_date=end)
+        JourneyCreated(
+            journey_id=journey.id, title="Lissabon", start_date=start, end_date=end
+        )
     ]
