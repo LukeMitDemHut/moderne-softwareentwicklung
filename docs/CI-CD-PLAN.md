@@ -23,7 +23,7 @@ Strategy document for the Continuous Integration / Continuous Delivery pipeline 
 
 ## 3. Workflow Layout
 
-1. **`lint.yml`** — Stage 1. Checkout → set up Python 3.13 (pip-cached) → `./dev lint`.
+1. **`lint.yml`** — Stage 1. Checkout → `./dev lint` (compose builds the image on demand; findings are attached as PR annotations via `ruff --output-format=github`).
 2. **`test.yml`** — Stage 2. Checkout → build compose environment → run `./dev test` inside the app container → collect exit code, test summary and coverage report → tear down.
 3. **`release.yml`** — Stage 3. Runs the same test job as Stage 2 first; only on success: build the image, push to GHCR, create the GitHub Release.
 

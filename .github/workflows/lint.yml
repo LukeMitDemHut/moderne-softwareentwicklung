@@ -1,0 +1,29 @@
+name: lint
+
+on:
+  push:
+    # '**' matches every branch
+    branches: ["**"]
+    # docs/frontend changes never lint
+    paths-ignore:
+      - "docs/**"
+      - "frontend/**"
+      - "**.md"
+  workflow_dispatch: {}
+
+# runs supersede each other per ref (branch pushes, not per-run-id)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lint
+        run: ./dev lint --output-format=github
