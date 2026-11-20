@@ -39,7 +39,7 @@ The LLM made ten improvement suggestions, of which we adopted those that close g
 
 ## Task 2: Generating and Validating Test Cases with an LLM
 
-**Test suite:** `tests/journey_management/domain/test_journey.py` for `Journey.create` (10 test functions, 11 test runs)
+**Test suite:** `backend/tests/journey_management/domain/test_journey.py` for `Journey.create` (10 test functions, 11 test runs)
 
 | Type | Test |
 |---|---|
@@ -60,7 +60,7 @@ We gave Claude (Sonnet 5.5) the context of Journey Management, the rules for `Jo
 
 ## Task 3: Implementing the Domain Logic with LLM Pair Programming
 
-**Implementation:** `src/sqr/journey_management/domain/journey/journey.py`, `src/sqr/journey_management/domain/exceptions.py`
+**Implementation:** `backend/src/sqr/journey_management/domain/journey/journey.py`, `backend/src/sqr/journey_management/domain/exceptions.py`
 
 **Documentation:**
 

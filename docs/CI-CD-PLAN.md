@@ -52,7 +52,7 @@ Constraints: `./dev` must itself set up its prerequisites (compose build before 
 
 ## 6. Lint Strategy (Stages 1 & 2)
 
-- **Tool:** ruff (lint + formatting rules), configured in `pyproject.toml`
+- **Tool:** ruff (lint + formatting rules), configured in `backend/pyproject.toml`
 - Runs on every push to a branch (tags are not linted separately — the Stage 3 test gate covers them).
 - Findings are never fixed by CI; the gate simply fails and developers fix locally (optionally via `./dev lint --fix`).
 - Developers could use pre-commit (config supplied by repo) or IDE linting features to automate linting
