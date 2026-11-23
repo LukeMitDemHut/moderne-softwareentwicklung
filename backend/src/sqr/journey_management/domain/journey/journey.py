@@ -25,7 +25,8 @@ class Journey:
             raise InvalidJourneyTimeframe("Start date must be in the future")
         if start_date >= end_date:
             raise InvalidJourneyTimeframe("Start date must be before end date")
-        if not title.strip():
+        title = title.strip()
+        if not title:
             raise InvalidJourneyTitle("Title must not be empty")
         journey = cls(id=uuid4(), title=title, start_date=start_date, end_date=end_date)
         journey.events.append(

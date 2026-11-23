@@ -127,6 +127,7 @@ def test_create_journey_records_journey_created_event():
         )
     ]
 
+
 def test_create_journey_strips_whitespace_around_title():
     start = date(2026, 12, 1)
     end = date(2026, 12, 8)
