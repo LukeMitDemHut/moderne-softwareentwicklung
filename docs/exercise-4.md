@@ -15,7 +15,7 @@ LLM used: Claude (Sonnet 5.5, Anthropic)
 
 | Event | Context | Trigger | Important Rule |
 |---|---|---|---|
-| `UserRegistered` | User Management | Register User | Registration and login are mandatory before a journey may be created |
+| `UserRegistered` | User Management | Register User | Registration and login will eventually be mandatory before a journey may be created |
 | `JourneyCreated` | Journey Management | Create Journey | Start and end are mandatory, both in the future, start before end |
 | `JourneyTimeframeChanged` | Journey Management | Change Journey Timeframe | In case of conflicts with activities only via a confirmed AI suggestion, applied atomically |
 | `SuggestionAccepted` | AI Assistance | Accept Suggestion | Journey Management applies the chosen changes atomically |
