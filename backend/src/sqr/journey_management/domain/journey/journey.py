@@ -9,7 +9,7 @@ from sqr.journey_management.domain.exceptions import (
 from sqr.journey_management.domain.journey.events import JourneyCreated
 
 
-@dataclass
+@dataclass(eq=False)  # entity: equality by identity, not by field values
 class Journey:
     id: UUID
     title: str
@@ -38,3 +38,9 @@ class Journey:
             )
         )
         return journey
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Journey) and self.id == other.id
+
+    def __hash__(self) -> int:
+        return hash(self.id)
