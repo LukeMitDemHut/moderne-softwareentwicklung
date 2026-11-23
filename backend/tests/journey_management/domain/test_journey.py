@@ -126,3 +126,14 @@ def test_create_journey_records_journey_created_event():
             journey_id=journey.id, title="Lissabon", start_date=start, end_date=end
         )
     ]
+
+def test_create_journey_strips_whitespace_around_title():
+    start = date(2026, 12, 1)
+    end = date(2026, 12, 8)
+
+    journey = Journey.create(
+        title="  Lissabon und Porto  ", start_date=start, end_date=end, today=TODAY
+    )
+
+    assert journey.title == "Lissabon und Porto"
+    assert journey.events[0].title == "Lissabon und Porto"
