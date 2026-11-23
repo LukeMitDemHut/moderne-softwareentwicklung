@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -138,3 +139,55 @@ def test_create_journey_strips_whitespace_around_title():
 
     assert journey.title == "Lissabon und Porto"
     assert journey.events[0].title == "Lissabon und Porto"
+
+
+def test_journeys_with_same_id_are_equal_even_if_title_differs():
+    journey = Journey.create(
+        title="Lissabon",
+        start_date=date(2026, 12, 1),
+        end_date=date(2026, 12, 8),
+        today=TODAY,
+    )
+    renamed = replace(journey, title="Lissabon und Porto")
+
+    assert renamed == journey
+
+
+def test_journeys_with_identical_data_but_different_ids_are_not_equal():
+    first = Journey.create(
+        title="Lissabon",
+        start_date=date(2026, 12, 1),
+        end_date=date(2026, 12, 8),
+        today=TODAY,
+    )
+    second = Journey.create(
+        title="Lissabon",
+        start_date=date(2026, 12, 1),
+        end_date=date(2026, 12, 8),
+        today=TODAY,
+    )
+
+    assert first != second
+
+
+def test_journeys_with_same_id_count_once_in_a_set():
+    journey = Journey.create(
+        title="Lissabon",
+        start_date=date(2026, 12, 1),
+        end_date=date(2026, 12, 8),
+        today=TODAY,
+    )
+    renamed = replace(journey, title="Lissabon und Porto")
+
+    assert len({journey, renamed}) == 1
+
+
+def test_journey_is_not_equal_to_other_types():
+    journey = Journey.create(
+        title="Lissabon",
+        start_date=date(2026, 12, 1),
+        end_date=date(2026, 12, 8),
+        today=TODAY,
+    )
+
+    assert journey != journey.id
