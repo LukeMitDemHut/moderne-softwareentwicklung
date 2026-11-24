@@ -4,11 +4,6 @@ on:
   push:
     # '**' matches every branch
     branches: ["**"]
-    # docs/frontend changes never lint
-    paths-ignore:
-      - "docs/**"
-      - "frontend/**"
-      - "**.md"
   workflow_dispatch: {}
 
 # runs supersede each other per ref (branch pushes, not per-run-id)
