@@ -36,6 +36,7 @@ class Journey:
                 title=journey.title,
                 start_date=journey.start_date,
                 end_date=journey.end_date,
+                occurred_at=now,
             )
         )
         return journey

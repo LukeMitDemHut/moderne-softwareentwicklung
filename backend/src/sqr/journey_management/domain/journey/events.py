@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 
@@ -11,3 +11,4 @@ class JourneyCreated:
     title: str
     start_date: date
     end_date: date
+    occurred_at: datetime
