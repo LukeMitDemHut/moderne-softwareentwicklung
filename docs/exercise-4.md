@@ -22,7 +22,7 @@ LLM used: Claude (Sonnet 5.5, Anthropic)
 
 ### Adapted Development Strategy
 
-1. **Phase 0 (skeleton):** We set up `pyproject.toml` with pytest and ruff, a platform-independent `dev` command and a CI with lint and pytest. We will only introduce Docker Compose and E2E tests once there are multiple services.
+1. **Phase 0 (skeleton):** Done in the tooling PRs (#6, #8). The backend lives in `backend/` with `pyproject.toml` (pytest, ruff, coverage) and dependencies managed by `uv` (`uv.lock`). Tests, lint and formatting run inside a Docker container (`backend/Dockerfile`, `compose.yaml` with a single `app` service) via the platform-independent `./dev` command. The CI runs lint on every push and the test suite with 100 % branch coverage on every pull request into `main`; both checks are required by the branch protection on `main`. `.gitattributes` enforces LF line endings so `./dev` also works on Windows. E2E tests and further services follow once there is more than one service. Details: `docs/CI-CD-PLAN.md`.
 2. **Phase 1 (Journey Management, "Create Journey"):** We implement one function completely through all layers, using TDD and an in-memory repository. We model the owner via a `UserId` value object.
 3. **Phase 2 (Journey Management, further functions):** For each function we build one slice (Add Destination, Add Activity, Change Timeframe, Reorder, Remove, Archive, Restore).
 4. **Phase 3 (User Management):** We implement Register, Login and Profile, thereby replacing the fixed user from Phase 1.
