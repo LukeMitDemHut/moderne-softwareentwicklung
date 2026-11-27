@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 
@@ -10,9 +10,9 @@ from sqr.journey_management.domain.exceptions import (
 from sqr.journey_management.domain.journey.events import JourneyCreated
 from sqr.journey_management.domain.journey.journey import Journey
 
-TODAY = date(
-    2026, 11, 18
-)  # fixed date, so the test result never depends on the real day
+NOW = datetime(
+    2026, 11, 18, 10, 0, tzinfo=UTC
+)  # fixed point in time, so the test result never depends on the real clock
 
 
 def test_create_journey_with_valid_timeframe_succeeds():
@@ -20,7 +20,7 @@ def test_create_journey_with_valid_timeframe_succeeds():
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 8),
-        today=TODAY,
+        now=NOW,
     )
     assert journey.title == "Lissabon"
 
@@ -30,31 +30,31 @@ def test_create_journey_with_start_after_end_is_rejected():
     end = date(2026, 12, 1)
 
     with pytest.raises(InvalidJourneyTimeframe):  # expects exactly this error
-        Journey.create(title="Lissabon", start_date=start, end_date=end, today=TODAY)
+        Journey.create(title="Lissabon", start_date=start, end_date=end, now=NOW)
 
 
 def test_create_journey_with_start_in_the_past_is_rejected():
-    start = date(2026, 11, 1)  # before TODAY (2026-11-18)
+    start = date(2026, 11, 1)  # before NOW (2026-11-18)
     end = date(2026, 12, 8)
 
     with pytest.raises(InvalidJourneyTimeframe):
-        Journey.create(title="Lissabon", start_date=start, end_date=end, today=TODAY)
+        Journey.create(title="Lissabon", start_date=start, end_date=end, now=NOW)
 
 
 def test_create_journey_with_start_today_is_rejected():
-    start = TODAY  # exactly today: not "in the future"
+    start = NOW.date()  # exactly today: not "in the future"
     end = date(2026, 11, 25)
 
     with pytest.raises(InvalidJourneyTimeframe):
-        Journey.create(title="Lissabon", start_date=start, end_date=end, today=TODAY)
+        Journey.create(title="Lissabon", start_date=start, end_date=end, now=NOW)
 
 
 def test_create_journey_with_start_tomorrow_is_accepted():
     journey = Journey.create(
         title="Lissabon",
-        start_date=date(2026, 11, 19),  # TODAY + 1 day
+        start_date=date(2026, 11, 19),  # NOW + 1 day
         end_date=date(2026, 11, 20),
-        today=TODAY,
+        now=NOW,
     )
     assert journey.start_date == date(2026, 11, 19)
 
@@ -64,7 +64,7 @@ def test_create_journey_with_start_equal_to_end_is_rejected():
 
     with pytest.raises(InvalidJourneyTimeframe):
         Journey.create(
-            title="Lissabon", start_date=same_day, end_date=same_day, today=TODAY
+            title="Lissabon", start_date=same_day, end_date=same_day, now=NOW
         )
 
 
@@ -73,25 +73,23 @@ def test_create_journey_with_end_one_day_after_start_is_accepted():
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 2),  # smallest valid timeframe
-        today=TODAY,
+        now=NOW,
     )
     assert journey.end_date == date(2026, 12, 2)
 
 
-def test_create_journey_uses_the_given_today_value():
+def test_create_journey_uses_the_given_now_value():
     start = date(2026, 12, 1)
     end = date(2026, 12, 8)
-    early_today = date(2026, 11, 18)
-    late_today = date(2026, 12, 5)
+    early_now = datetime(2026, 11, 18, 10, 0, tzinfo=UTC)
+    late_now = datetime(2026, 12, 5, 10, 0, tzinfo=UTC)
 
-    # with today = 18 Nov the start lies in the future: accepted
-    Journey.create(title="Lissabon", start_date=start, end_date=end, today=early_today)
+    # with now = 18 Nov the start lies in the future: accepted
+    Journey.create(title="Lissabon", start_date=start, end_date=end, now=early_now)
 
     # with today = 5 Dec the same start lies in the past: rejected
     with pytest.raises(InvalidJourneyTimeframe):
-        Journey.create(
-            title="Lissabon", start_date=start, end_date=end, today=late_today
-        )
+        Journey.create(title="Lissabon", start_date=start, end_date=end, now=late_now)
 
 
 @pytest.mark.parametrize("title", ["", "   "])  # runs the test once per value
@@ -100,7 +98,7 @@ def test_create_journey_with_blank_title_is_rejected(title):
     end = date(2026, 12, 8)
 
     with pytest.raises(InvalidJourneyTitle):
-        Journey.create(title=title, start_date=start, end_date=end, today=TODAY)
+        Journey.create(title=title, start_date=start, end_date=end, now=NOW)
 
 
 def test_create_journey_with_single_character_title_is_accepted():
@@ -108,7 +106,7 @@ def test_create_journey_with_single_character_title_is_accepted():
     end = date(2026, 12, 8)
 
     journey = Journey.create(
-        title="A", start_date=start, end_date=end, today=TODAY
+        title="A", start_date=start, end_date=end, now=NOW
     )  # lower bound: no minimum length
 
     assert journey.title == "A"
@@ -118,9 +116,7 @@ def test_create_journey_records_journey_created_event():
     start = date(2026, 12, 1)
     end = date(2026, 12, 8)
 
-    journey = Journey.create(
-        title="Lissabon", start_date=start, end_date=end, today=TODAY
-    )
+    journey = Journey.create(title="Lissabon", start_date=start, end_date=end, now=NOW)
 
     assert journey.events == [
         JourneyCreated(
@@ -134,7 +130,7 @@ def test_create_journey_strips_whitespace_around_title():
     end = date(2026, 12, 8)
 
     journey = Journey.create(
-        title="  Lissabon und Porto  ", start_date=start, end_date=end, today=TODAY
+        title="  Lissabon und Porto  ", start_date=start, end_date=end, now=NOW
     )
 
     assert journey.title == "Lissabon und Porto"
@@ -146,7 +142,7 @@ def test_journeys_with_same_id_are_equal_even_if_title_differs():
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 8),
-        today=TODAY,
+        now=NOW,
     )
     renamed = replace(journey, title="Lissabon und Porto")
 
@@ -158,13 +154,13 @@ def test_journeys_with_identical_data_but_different_ids_are_not_equal():
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 8),
-        today=TODAY,
+        now=NOW,
     )
     second = Journey.create(
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 8),
-        today=TODAY,
+        now=NOW,
     )
 
     assert first != second
@@ -175,7 +171,7 @@ def test_journeys_with_same_id_count_once_in_a_set():
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 8),
-        today=TODAY,
+        now=NOW,
     )
     renamed = replace(journey, title="Lissabon und Porto")
 
@@ -187,7 +183,7 @@ def test_journey_is_not_equal_to_other_types():
         title="Lissabon",
         start_date=date(2026, 12, 1),
         end_date=date(2026, 12, 8),
-        today=TODAY,
+        now=NOW,
     )
 
     assert journey != journey.id

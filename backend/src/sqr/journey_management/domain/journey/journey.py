@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from sqr.journey_management.domain.exceptions import (
@@ -19,8 +19,9 @@ class Journey:
 
     @classmethod
     def create(
-        cls, title: str, start_date: date, end_date: date, today: date
+        cls, title: str, start_date: date, end_date: date, now: datetime
     ) -> "Journey":
+        today = now.date()
         if start_date <= today:
             raise InvalidJourneyTimeframe("Start date must be in the future")
         if start_date >= end_date:
