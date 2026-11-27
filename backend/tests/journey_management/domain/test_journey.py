@@ -120,7 +120,11 @@ def test_create_journey_records_journey_created_event():
 
     assert journey.events == [
         JourneyCreated(
-            journey_id=journey.id, title="Lissabon", start_date=start, end_date=end
+            journey_id=journey.id,
+            title="Lissabon",
+            start_date=start,
+            end_date=end,
+            occurred_at=NOW,
         )
     ]
 
