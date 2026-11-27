@@ -11,7 +11,7 @@ Strategy document for the Continuous Integration / Continuous Delivery pipeline 
 
 | # | Stage | Trigger | Content | Gate for |
 |---|-------|---------|---------|----------|
-| 1 | **Commit** | `push` to any branch (no tags, no docs-only changes) | Linting (ruff) | Nothing — early feedback only |
+| 1 | **Commit** | `push` to any branch (no tags) | Linting (ruff) | Nothing — early feedback only |
 | 2 | **Pull Request** | `pull_request` targeting `main` (merge preview), `push` to `main` (post-merge), `workflow_dispatch` | Linting + full test suite (pytest, coverage) executed **inside the container** via docker compose, including E2E against multiple services | Merging into `main` |
 | 3 | **Release** | `push` of a version tag (`v*.*.*`, semver) | Re-run Stage 2 as gate → build Docker image → push image → create GitHub Release | Publishing the version |
 
@@ -30,6 +30,7 @@ Strategy document for the Continuous Integration / Continuous Delivery pipeline 
 - **Registration constraint (why a bootstrap existed):** a check can only be marked *required* after GitHub has observed that workflow run once. Workflows without push triggers (e.g. `test.yml`) need the file on the default branch or one manual dispatch first. In the tooling PR both workflow files were therefore pushed to `main` directly *before* protection was activated — and the protection rule closed that channel immediately after.
 - **Gate manifest sync (mirrors the `./dev` contract in §4):** when workflow/job names change, or new gates appear (Stage 3's test job, coverage/JUnit reporting), the protection rule must be updated in the same change.
 - **Verification path:** `workflow_dispatch` of `test.yml` on a feature branch proves the pipeline stands up; it does *not* satisfy the merge gate — the gate always evaluates the pull request's merge preview.
+- **Path filters vs. required checks (decision of the tooling PR):** a check skipped by a path filter never reports, leaving the merge box in "Expected — waiting for status" — which would block docs-only merges indefinitely. Therefore all *merge-gating* triggers run unfiltered (`pull_request` into `main`, and lint on every branch push); the only surviving filter is on the post-merge `push` leg of `test.yml`, which is observability, not gate input. Cost: docs-only changes still spend runner minutes (~90 s). If minutes ever matter, the documented alternative is filters + a placeholder job that emits a passing check when skipped (e.g. `dorny/paths-filter`).
 
 ## 3. Workflow Layout
 

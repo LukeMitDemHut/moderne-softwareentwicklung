@@ -3,7 +3,6 @@ name: test
 on:
   pull_request:
     branches: ["main"]      # target filter: any PR *into* main
-    paths-ignore: ["docs/**", "frontend/**", "**.md"]
   push:
     branches: ["main"]
     paths-ignore: ["docs/**", "frontend/**", "**.md"]
