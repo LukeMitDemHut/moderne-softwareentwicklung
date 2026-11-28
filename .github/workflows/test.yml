@@ -3,7 +3,6 @@ name: test
 on:
   pull_request:
     branches: ["main"]      # target filter: any PR *into* main
-    paths-ignore: ["docs/**", "frontend/**", "**.md"]
   push:
     branches: ["main"]
     paths-ignore: ["docs/**", "frontend/**", "**.md"]
@@ -18,10 +17,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions: {}
+    # the coverage artifact needs write access to the Actions artifact store
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Test
         run: ./dev test
+
+      - name: Upload coverage report
+        if: always()  # report on red runs matters more than on green ones
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: backend/coverage.xml

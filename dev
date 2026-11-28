@@ -1,0 +1,145 @@
+#!/bin/bash
+
+set -e
+
+# Detect if we're running in CI environment
+CI_MODE=${CI:-false}
+if [ "$CI" = "true" ] || [ ! -t 0 ]; then
+    DOCKER_EXEC_FLAGS=""
+else
+    DOCKER_EXEC_FLAGS="-it"
+fi
+
+CONTAINER="sqr-app"
+
+# If no arguments are provided, default to an interactive bash shell
+if [ -z "$1" ]; then
+    docker exec $DOCKER_EXEC_FLAGS $CONTAINER /bin/bash
+    exit 0
+fi
+
+case "$1" in
+    --help|help)
+        cat << 'EOF'
+Development Helper Script
+TODO: Add usage instructions for the development helper script
+EOF
+
+        ;;
+    up)
+        shift
+        ./dev check-env && docker compose up -d "$@"
+        ;;
+    down)
+        shift
+        docker compose down "$@"
+        ;;
+    restart)
+        shift
+        ./dev check-env && docker compose restart "$@"
+        ;;
+    rebuild)
+        shift
+        ./dev down "$@"
+        docker compose build "$@"
+        ./dev up "$@"
+        ;;
+    test)
+        shift
+        docker compose run --rm app /opt/venv/bin/pytest --cov --cov-report=term-missing --cov-report=xml "$@"
+        ;;
+    lint)
+        shift
+        docker compose run --rm app /opt/venv/bin/ruff check "$@"
+        ;;
+    format)
+        shift
+        docker compose run --rm app /opt/venv/bin/ruff format "$@"
+        ;;
+    check-env)
+        echo "Checking environment variables..."
+        echo ""
+
+        # Find all .env*.example files in the repository (including .env.example, .env.test.example, etc.)
+        ENV_EXAMPLE_FILES=$(find . -name ".env*.example" -not -path "*/vendor/*" -not -path "*/node_modules/*" -not -path "*/var/*" 2>/dev/null)
+
+        if [ -z "$ENV_EXAMPLE_FILES" ]; then
+            echo "No .env*.example files found in the repository."
+            exit 0
+        fi
+
+        MISSING_VARS_FOUND=0
+        EXTRA_VARS_FOUND=0
+
+        # Process each .env*.example file
+        while IFS= read -r EXAMPLE_FILE; do
+            if [ -z "$EXAMPLE_FILE" ]; then
+                continue
+            fi
+
+            # Determine the corresponding .env* file by removing .example suffix
+            ENV_FILE="${EXAMPLE_FILE%.example}"
+
+            echo "Checking: $EXAMPLE_FILE"
+
+            if [ ! -f "$ENV_FILE" ]; then
+                echo "  ⚠️  Missing corresponding file: $ENV_FILE"
+                echo ""
+                continue
+            fi
+
+            # Extract variable names from .env*.example (ignoring comments and empty lines)
+            EXAMPLE_VARS=$(grep -v '^#' "$EXAMPLE_FILE" | grep -v '^[[:space:]]*$' | sed 's/=.*//' | sort)
+
+            # Extract variable names from .env* (ignoring comments and empty lines)
+            ENV_VARS=$(grep -v '^#' "$ENV_FILE" | grep -v '^[[:space:]]*$' | sed 's/=.*//' | sort)
+
+            # Find variables in .env*.example but not in .env*
+            MISSING_VARS=$(comm -23 <(echo "$EXAMPLE_VARS") <(echo "$ENV_VARS"))
+
+            # Find variables in .env* but not in .env*.example
+            EXTRA_VARS=$(comm -13 <(echo "$EXAMPLE_VARS") <(echo "$ENV_VARS"))
+
+            if [ -n "$MISSING_VARS" ]; then
+                echo "  ❌ Missing variables in $ENV_FILE:"
+                echo "$MISSING_VARS" | while read -r VAR; do
+                    if [ -n "$VAR" ]; then
+                        echo "     - $VAR"
+                    fi
+                done
+                MISSING_VARS_FOUND=1
+            fi
+
+            if [ -n "$EXTRA_VARS" ]; then
+                echo "  ⚠️  Extra variables in $ENV_FILE (not in example file):"
+                echo "$EXTRA_VARS" | while read -r VAR; do
+                    if [ -n "$VAR" ]; then
+                        echo "     + $VAR"
+                    fi
+                done
+                EXTRA_VARS_FOUND=1
+            fi
+
+            if [ -z "$MISSING_VARS" ] && [ -z "$EXTRA_VARS" ]; then
+                echo "  ✅ All variables match!"
+            fi
+
+            echo ""
+        done <<< "$ENV_EXAMPLE_FILES"
+
+        if [ $MISSING_VARS_FOUND -eq 0 ] && [ $EXTRA_VARS_FOUND -eq 0 ]; then
+            echo "✅ All environment files are in sync!"
+        elif [ $MISSING_VARS_FOUND -eq 1 ]; then
+            echo "❌ Missing required environment variables. Please add them before continuing."
+            exit 1
+        elif [ $EXTRA_VARS_FOUND -eq 1 ]; then
+            echo "⚠️  Extra environment variables detected (you might want to check if they are needed)."
+            exit 0
+        fi
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Use --help or help for usage information."
+        exit 1
+        ;;
+esac

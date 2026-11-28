@@ -26,32 +26,27 @@ For every new feature or domain concept, we will:
 
 This repository will be organized to reflect the bounded context and layered architecture, with separate directories for each context and its corresponding domain, application, and infrastructure layers.
 
-Top level — each bounded context is one package under the `sqr` namespace:
+Inside `backend/src` — each bounded context is one package under the `sqr` namespace:
 
 ```text
 .
 ├── dev                          # ./dev command interface — contract defined in CI-CD-PLAN.md §4
-├── pyproject.toml               # Python 3.13 backend package: deps, ruff + pytest/coverage config
 ├── compose.yaml                 # multi-service environment (backend, frontend, db, cache) for dev + Stage 2 E2E
-├── Dockerfile                   # single runtime image: backend + frontend built as static assets
+├── backend/                     # the Python 3.13 project — also the container boundary (bind-mounted as /app)
+│   ├── pyproject.toml           # backend package: deps, ruff + pytest/coverage config
+│   ├── uv.lock                  # exact dependency resolution (`uv sync --locked` installs exactly this)
+│   ├── Dockerfile               # deps stage (uv sync into /opt/venv) + dev target (source arrives via bind-mount); Stage 3: release image also builds frontend as static assets
+│   ├── src/sqr/                 # backend source, one package per bounded context
+│   └── tests/                   # mirrors src/, one subtree per context (TDD per implementation strategy)
+├── frontend/                    # own toolchain; views grouped per context to mirror the backend
 ├── .env.example                 # template for compose env vars (e.g. LLM API key once ai_assistance starts)
 ├── .pre-commit-config.yaml      # optional local ruff hook (CI-CD-PLAN.md §6)
 ├── .github/workflows/           # lint.yml (Stage 1), test.yml (Stage 2), release.yml (Stage 3)
 ├── docs/
 │   ├── adr/                     # architecture decision records (rationale per significant choice)
 │   └── uml/                     # UML module: context map, aggregate class diagrams
-├── src/sqr/
-│   ├── main.py                  # composition root: FastAPI app factory, wires all contexts together
-│   ├── shared/                  # small shared kernel: domain events, common value objects
-│   ├── journey_management/      # core context — expanded below; aggregate root: Journey
-│   ├── user_management/         # same four-layer layout; aggregate root: User, value object: UserPreference
-│   └── ai_assistance/           # same layout; aggregate root: AIConversation, entity: Suggestion; implemented last
-├── tests/                       # mirrors src/, one subtree per context (TDD per implementation strategy)
-│   ├── journey_management/
-│   ├── user_management/
-│   └── ai_assistance/
 ├── e2e/                         # Stage 2 E2E: collected separately, only runs against the compose environment
-└── frontend/                    # own toolchain; views grouped per context to mirror the backend
+└── ...
 ```
 
 Each context will have the same four-layer structure:
@@ -65,7 +60,7 @@ Each context will have the same four-layer structure:
 Journey Management as an example context:
 
 ```text
-src/sqr/journey_management/
+backend/src/sqr/journey_management/
 ├── domain/                      # pure model — no FastAPI/DB/framework imports
 │   ├── journey/                 # aggregate cluster, vocabulary 1:1 from tmp/classdiagram.mermaid
 │   │   ├── journey.py           # Journey aggregate root: title, start/end dates, addDestination(), updatePlan(), shareJourney()
